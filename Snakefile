@@ -10,28 +10,40 @@ from os.path import join as pjoin
 from os.path import exists as pexists
 import hashlib
 
-workdir: "../../../../var/marius_wf/rna_seq/TopHat2_all"
+configfile: "config.json"
+workdir: config["var"]
+
+
+DATA = config['data']
+RESULT = config['result']
+LOGS = config['logs']
+REF = config['ref']
+INI_PATH = config['etc']
+SNAKEDIR = config['src']
+
 
 INPUT_FILES = []
-for name in os.listdir('../../../../data'):
+for name in os.listdir(DATA):
     if name.lower().endswith('.fastq'):
         if not name.endswith('.fastq'):
             print("Extension fastq is case sensitive.", file=sys.stderr)
             exit(1)
         INPUT_FILES.append(os.path.basename(name)[:-6])
 
-OUTPUT_FILES = ["Summary/NumReads/Original/{name}.txt".format(name=name) for name in INPUT_FILES],\
-               ["Summary/NumReads/PreFilter/{name}.txt".format(name=name) for name in INPUT_FILES],\
-               ["FastQC/{name}".format(name=name) for name in INPUT_FILES],\
-               ["Summary/NumReads/CutAdaptMerge/{name}.txt".format(name=name) for name in INPUT_FILES]
+OUTPUT_FILES = []
+
+OUTPUT_FILES.extend(expand("Summary/NumReads/Original/{name}.txt", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("Summary/NumReads/PreFilter/{name}.txt", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("{result}/FastQC_{name}", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("Summary/NumReads/CutAdaptMerge/{name}.txt", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("{result}/HTSeqCounts_{name}.txt", name=INPUT_FILES, result=RESULT))
+
 
 rule all:
-    #input: ["CutAdaptMerge/{name}.fastq".format(name=name) for name in INPUT_FILES], OUTPUT_FILES
-    #input: expand("HTSeqCounts/{name}.txt FastQC/{name}".split(), name=INPUT_FILES
-    input: ["HTSeqCounts/{name}.txt".format(name=name) for name in INPUT_FILES], OUTPUT_FILES
+    input: OUTPUT_FILES
 
 rule PreFilterReads:
-    input: "../../../../data/{name}.fastq"
+    input: os.path.join(DATA, "{name}.fastq")
     output: "PreFilterReads/{name}.fastq"
     shell: 'grep "1:N:" --no-group-separator -A 3 {input} > {output}'
     
@@ -39,6 +51,11 @@ rule FastQC:
     input: "PreFilterReads/{name}.fastq"
     output: "FastQC/{name}","FastQC/{name}/{name}_fastqc"
     shell: 'mkdir -p {output} && (fastqc {input} -o {output} || (rm -rf {output} && exit 1))'
+
+rule FastQCCpToResult:
+    input: "FastQC/{name}"
+    output: os.path.join(RESULT, "FastQC_{name}.zip")
+    shell: "cp {input}/{wildcards.name}_fastqc.zip {output}"
 
 rule FastQCcut:
     input: "CutAdaptMerge/{name}.fastq"
@@ -92,12 +109,12 @@ rule CutAdapt:
 rule TopHat2:
     input: "CutAdaptMerge/{name}.fastq"
     output: "TopHat2/{name}"
-    shell: 'tophat --no-coverage-search -o {output} -p 2 -G ../../../../ref/UCSC_mm10/annotation/genes.gtf ../../../../ref/UCSC_mm10/Sequence/Bowtie2Index/genome {input}'
+    shell: 'tophat --no-coverage-search -o {output} -p 2 -G ' + params["gtf"] + ' ' + params["indexedGenome"] + ' {input}'
 
 rule HTSeqCounts:
     input: "TopHat2/{name}"
-    output: "HTSeqCounts/{name}.txt"
-    shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - ../../../../ref/UCSC_mm10/annotation/genes.gtf > {output}"
+    output: os.path.join(RESULT, "HTSeqCounts_{name}.txt")
+    shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - " + params["gtf"] + "  > {output}"
 
 rule IndexBAM:
     input: "TopHat2/{name}"
@@ -120,7 +137,7 @@ rule NumreadsCut:
     shell: 'wc -l {input} > {output}'
 
 rule NumreadsOrig:
-    input: "../../../../data/{name}.fastq"
+    input: os.path.join(DATA, "{name}.fastq")
     output: "Summary/NumReads/Original/{name}.txt"
     shell: 'wc -l {input} > {output}'
 
