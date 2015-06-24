@@ -1,14 +1,7 @@
 import os
 import sys
-import subprocess
-import tempfile
-import uuid
-import shutil
-import jinja2
-from datetime import datetime
 from os.path import join as pjoin
 from os.path import exists as pexists
-import hashlib
 
 configfile: "config.json"
 workdir: config["var"]
