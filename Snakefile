@@ -20,6 +20,7 @@ LOGS = config['logs']
 REF = config['ref']
 INI_PATH = config['etc']
 SNAKEDIR = config['src']
+params = config['params']
 
 
 INPUT_FILES = []
@@ -34,7 +35,7 @@ OUTPUT_FILES = []
 
 OUTPUT_FILES.extend(expand("Summary/NumReads/Original/{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/NumReads/PreFilter/{name}.txt", name=INPUT_FILES, result=RESULT))
-OUTPUT_FILES.extend(expand("{result}/FastQC_{name}", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("{result}/FastQC_{name}.zip", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/NumReads/CutAdaptMerge/{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("{result}/HTSeqCounts_{name}.txt", name=INPUT_FILES, result=RESULT))
 
@@ -49,7 +50,7 @@ rule PreFilterReads:
     
 rule FastQC:
     input: "PreFilterReads/{name}.fastq"
-    output: "FastQC/{name}","FastQC/{name}/{name}_fastqc"
+    output: "FastQC/{name}"
     shell: 'mkdir -p {output} && (fastqc {input} -o {output} || (rm -rf {output} && exit 1))'
 
 rule FastQCCpToResult:
@@ -63,10 +64,10 @@ rule FastQCcut:
     shell: 'mkdir -p {output} && (fastqc {input} -o {output} || (rm -rf {output} && exit 1))'
 
 rule Overrepresented:
-    input: "FastQC/{name}/{name}_fastqc/fastqc_data.txt"
+    input: "FastQC/{name}"
     output: "Overrepresented/{name}.txt"
     run:
-        f = open(str(input))
+        f = open(str(input) + "/" + wildcards['name'] + "_fastqc/fastqc_data.txt")
         out = open(str(output), "w")
         sw = False
         for line in f:
@@ -109,12 +110,12 @@ rule CutAdapt:
 rule TopHat2:
     input: "CutAdaptMerge/{name}.fastq"
     output: "TopHat2/{name}"
-    shell: 'tophat --no-coverage-search -o {output} -p 2 -G ' + params["gtf"] + ' ' + params["indexedGenome"] + ' {input}'
+    shell: 'tophat --no-coverage-search -o {output} -p 2 -G ' + os.path.join(REF, params["gtf"]) + ' ' + os.path.join(REF, params["indexedGenome"]) + ' {input}'
 
 rule HTSeqCounts:
     input: "TopHat2/{name}"
     output: os.path.join(RESULT, "HTSeqCounts_{name}.txt")
-    shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - " + params["gtf"] + "  > {output}"
+    shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - " + os.path.join(REF, params["gtf"]) + "  > {output}"
 
 rule IndexBAM:
     input: "TopHat2/{name}"
