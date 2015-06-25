@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 from os.path import join as pjoin
 from os.path import exists as pexists
 
@@ -14,6 +15,14 @@ REF = config['ref']
 INI_PATH = config['etc']
 SNAKEDIR = config['src']
 params = config['params']
+
+gtf = os.path.join(REF, params["gtf"])
+if not gtf:
+    raise ValueError("no gtf file supplied.")
+
+indexedGenome = os.path.join(config['ref'], params["indexedGenome"])
+if not indexedGenome:
+    raise ValueError("no indexedGenome file supplied.")
 
 
 INPUT_FILES = []
@@ -31,6 +40,8 @@ OUTPUT_FILES.extend(expand("Summary/NumReads/PreFilter/{name}.txt", name=INPUT_F
 OUTPUT_FILES.extend(expand("{result}/FastQC_{name}.zip", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/NumReads/CutAdaptMerge/{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("{result}/HTSeqCounts_{name}.txt", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("TopHat2/{name}/accepted_hits.bai", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("Summary/MappingStats/{name}.txt", name=INPUT_FILES, result=RESULT))
 
 
 rule all:
@@ -103,17 +114,24 @@ rule CutAdapt:
 rule TopHat2:
     input: "CutAdaptMerge/{name}.fastq"
     output: "TopHat2/{name}"
-    shell: 'tophat --no-coverage-search -o {output} -p 2 -G ' + os.path.join(REF, params["gtf"]) + ' ' + os.path.join(REF, params["indexedGenome"]) + ' {input}'
+    #shell: 'tophat --no-coverage-search -o {output} -p 2 -G ' + os.path.join(REF, params["gtf"]) + ' ' + os.path.join(REF, params["indexedGenome"]) + ' {input}'
+    shell: 'tophat --no-coverage-search -o {output} -p 2 -G ' + gtf + ' ' + indexedGenome + ' {input}'
 
 rule HTSeqCounts:
     input: "TopHat2/{name}"
     output: os.path.join(RESULT, "HTSeqCounts_{name}.txt")
-    shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - " + os.path.join(REF, params["gtf"]) + "  > {output}"
+    shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - " + gtf + "  > {output}"
 
 rule IndexBAM:
     input: "TopHat2/{name}"
     output: "TopHat2/{name}/accepted_hits.bai"
-    shell: "samtools index {input}/accepted_hits.bam  {output}"
+    shell: "samtools index {input}/accepted_hits.bam && mv -f {input}/accepted_hits.bam.bai  {output}"
+
+rule CpAlignSummary:
+    input: "TopHat2/{name}/align_summary.txt"
+    output: "Summary/MappingStats/{name}.txt"
+    shell: "cp {input} {output}"
+
 
 rule PerBaseCoverage:
     input: "TopHat2/{name}"
