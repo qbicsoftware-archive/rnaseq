@@ -16,6 +16,19 @@ INI_PATH = config['etc']
 SNAKEDIR = config['src']
 params = config['params']
 
+def data(path):
+    return os.path.join(DATA, path)
+
+def ref(path):
+    return os.path.join(REF, path)
+
+def log(path):
+    return os.path.join(LOGS, path)
+
+def result(path):
+    return os.path.join(RESULT, path)
+
+
 gtf = os.path.join(REF, params["gtf"])
 if not gtf:
     raise ValueError("no gtf file supplied.")
@@ -32,6 +45,18 @@ for name in os.listdir(DATA):
             print("Extension fastq is case sensitive.", file=sys.stderr)
             exit(1)
         INPUT_FILES.append(os.path.basename(name)[:-6])
+    elif name.lower().endswith('.fastq.gz'):
+        if not name.endswith('.fastq.gz'):
+            print("Extension fastq is case sensitive.", file=sys.stderr)
+            exit(1)
+        INPUT_FILES.append(os.path.basename(name)[:-len('.fastq.gz')])
+    else:
+        print("Unknown data file: %s" % name)
+        exit(1)
+
+if len(set(INPUT_FILES)) != len(INPUT_FILES):
+    print("Some input file names are not unique")
+    exit(1)
 
 OUTPUT_FILES = []
 
@@ -47,11 +72,21 @@ OUTPUT_FILES.extend(expand("Summary/MappingStats/{name}.txt", name=INPUT_FILES, 
 rule all:
     input: OUTPUT_FILES
 
+rule LinkUncompressed:
+    input: data("{name}.fastq")
+    output: "fastq/{name}.fastq"
+    shell: "ln -s {input} {output}"
+
+rule Uncompress:
+    input: data("{name}.fastq.gz")
+    output: "fastq/{name}.fastq"
+    shell: "zcat {input} > {output}"
+
 rule PreFilterReads:
-    input: os.path.join(DATA, "{name}.fastq")
+    input: "fastq/{name}.fastq"
     output: "PreFilterReads/{name}.fastq"
     shell: 'grep "1:N:" --no-group-separator -A 3 {input} > {output}'
-    
+
 rule FastQC:
     input: "PreFilterReads/{name}.fastq"
     output: "FastQC/{name}"
@@ -59,7 +94,7 @@ rule FastQC:
 
 rule FastQCCpToResult:
     input: "FastQC/{name}"
-    output: os.path.join(RESULT, "FastQC_{name}.zip")
+    output: result("FastQC_{name}.zip")
     shell: "cp {input}/{wildcards.name}_fastqc.zip {output}"
 
 rule FastQCcut:
@@ -107,7 +142,7 @@ rule MergeAdapters:
     shell: "cat {input} > {output}"
 
 rule CutAdapt:
-    input: "MergeAdapters/merged.fasta", "PreFilterReads/{name}.fastq" 
+    input: "MergeAdapters/merged.fasta", "PreFilterReads/{name}.fastq"
     output: "CutAdaptMerge/{name}.fastq"
     shell: 'cutadapt --discard-trimmed -a file:{input[0]} -o {output} {input[1]}'
 
@@ -119,7 +154,7 @@ rule TopHat2:
 
 rule HTSeqCounts:
     input: "TopHat2/{name}"
-    output: os.path.join(RESULT, "HTSeqCounts_{name}.txt")
+    output: result("HTSeqCounts_{name}.txt")
     shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - " + gtf + "  > {output}"
 
 rule IndexBAM:
@@ -128,10 +163,9 @@ rule IndexBAM:
     shell: "samtools index {input}/accepted_hits.bam && mv -f {input}/accepted_hits.bam.bai  {output}"
 
 rule CpAlignSummary:
-    input: "TopHat2/{name}/align_summary.txt"
+    input: "TopHat2/{name}"
     output: "Summary/MappingStats/{name}.txt"
-    shell: "cp {input} {output}"
-
+    shell: "cp {input}/align_summary.txt {output}"
 
 rule PerBaseCoverage:
     input: "TopHat2/{name}"
@@ -149,7 +183,7 @@ rule NumreadsCut:
     shell: 'wc -l {input} > {output}'
 
 rule NumreadsOrig:
-    input: os.path.join(DATA, "{name}.fastq")
+    input: "fastq/{name}.fastq"
     output: "Summary/NumReads/Original/{name}.txt"
     shell: 'wc -l {input} > {output}'
 
