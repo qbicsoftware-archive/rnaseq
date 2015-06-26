@@ -1,0 +1,27 @@
+rna seq workflow for use with qproject.
+
+Add section "params" in the config that is created by qproject like this:
+
+```
+{
+    "base": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq",
+    "data": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/data",
+    "ref": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/ref/",
+    "src": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/src",
+    "var": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/var",
+    "result": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/result",
+    "run": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/run",
+    "etc": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/etc",
+    "logs": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/logs",
+    "archive": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/archive",
+    "usr": "/lustre_cfc/qbic/qbic_projects/PCKO/src/marius_wf/rna_seq/rnaseq/usr",
+    "params": {
+        "gtf": "genes.gtf",
+        "indexedGenome": "Bowtie2Index/genome"
+    }
+}
+```
+
+where `indexedGenome` and `gtf` are paths relative to `ref`.
+
+`indexedGenome` is the basename of a bowtie2 index.
