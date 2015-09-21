@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import json
 from os.path import join as pjoin
 from os.path import exists as pexists
 
@@ -12,9 +13,8 @@ DATA = config['data']
 RESULT = config['result']
 LOGS = config['logs']
 REF = config['ref']
-INI_PATH = config['etc']
+ETC = config['etc']
 SNAKEDIR = config['src']
-params = config['params']
 
 def data(path):
     return os.path.join(DATA, path)
@@ -28,10 +28,32 @@ def log(path):
 def result(path):
     return os.path.join(RESULT, path)
 
+def etc(path):
+    return os.path.join(ETC, path)
 
-gtf = os.path.join(REF, params["gtf"])
-if not gtf:
-    raise ValueError("no gtf file supplied.")
+
+try:
+    with open(etc("params.json")) as f:
+        params = json.load(f)
+except OSError as e:
+    print("Could not read parameter file: " + str(e), file=sys.stderr)
+    sys.exit(1)
+except ValueError as e:
+    print("Invalid parameter file: " + str(e), file=sys.stderr)
+    sys.exit(1)
+
+default_params = {
+    "stranded": 'yes',
+    "overlap_mode": 'union'
+}
+default_params.update(params)
+params = default_params
+
+for key in ['gtf', 'stranded', 'overlap_mode',
+            'gff_attribute', 'feature_type']:
+    if key not in params:
+        print("Missing parameter %s in etc/params.json" % key, file=sys.stderr)
+        exit(1)
 
 indexedGenome = os.path.join(config['ref'], params["indexedGenome"])
 if not indexedGenome:
@@ -51,7 +73,7 @@ for name in os.listdir(DATA):
             exit(1)
         INPUT_FILES.append(os.path.basename(name)[:-len('.fastq.gz')])
     else:
-        print("Unknown data file: %s" % name)
+        print("Unknown data file: %s" % name, file=sys.stderr)
         exit(1)
 
 if len(set(INPUT_FILES)) != len(INPUT_FILES):
@@ -162,7 +184,11 @@ rule TopHat2:
 rule HTSeqCounts:
     input: "TopHat2/{name}"
     output: result("HTSeqCounts_{name}.txt")
-    shell: "samtools view {input}/accepted_hits.bam | htseq-count -i gene_id -t exon -s yes - " + gtf + "  > {output}"
+    run:
+        sam_command = "samtools view {input}/accepted_hits.bam"
+        htseq = ("htseq-count -i {gff_attribute} -t {feature_type} "
+                 "-m {overlap_mode} -s {stranded} {gtf}").format(**params)
+        shell("%s | %s > {output}" % (sam_command, htseq))
 
 rule IndexBAM:
     input: "TopHat2/{name}"
