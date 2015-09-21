@@ -67,10 +67,17 @@ OUTPUT_FILES.extend(expand("Summary/NumReads/CutAdaptMerge/{name}.txt", name=INP
 OUTPUT_FILES.extend(expand("{result}/HTSeqCounts_{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("TopHat2/{name}/accepted_hits.bai", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/MappingStats/{name}.txt", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend("checksums.ok")
 
 
 rule all:
     input: OUTPUT_FILES
+
+rule checksums:
+    output: "checksums.ok"
+    run:
+        checksums = data("*.sha256sum")
+        shell("sha256sum -c %s && touch {output}" % checksums)
 
 rule LinkUncompressed:
     input: data("{name}.fastq")
@@ -186,4 +193,3 @@ rule NumreadsOrig:
     input: "fastq/{name}.fastq"
     output: "Summary/NumReads/Original/{name}.txt"
     shell: 'wc -l {input} > {output}'
-
