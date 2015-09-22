@@ -227,14 +227,14 @@ rule PerBaseCoverage:
 rule Numreads:
     input: "PreFilterReads/{name}.fastq"
     output: "Summary/NumReads/PreFilter/{name}.txt"
-    shell: 'wc -l {input} > {output}'
+    shell: '''dc -e "$(wc -l {input} | cut -f1 -d' ') 4 / p" > {output}'''
 
 rule NumreadsCut:
     input: "CutAdaptMerge/{name}.fastq"
     output: "Summary/NumReads/CutAdaptMerge/{name}.txt"
-    shell: 'wc -l {input} > {output}'
+    shell: '''dc -e "$(wc -l {input} | cut -f1 -d' ') 4 / p" > {output}'''
 
 rule NumreadsOrig:
     input: "fastq/{name}.fastq"
     output: "Summary/NumReads/Original/{name}.txt"
-    shell: 'wc -l {input} > {output}'
+    shell: '''dc -e "$(wc -l {input} | cut -f1 -d' ') 4 / p" > {output}'''
