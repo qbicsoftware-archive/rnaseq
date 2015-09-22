@@ -1,27 +1,22 @@
 rna seq workflow for use with qproject.
 
-Add section "params" in the config that is created by qproject like this:
+Add a config file "params.json" in `etc`:
 
 ```
 {
-    "base": "project",
-    "data": "project/data",
-    "ref": "project/ref/",
-    "src": "project/src",
-    "var": "project/var",
-    "result": "project/result",
-    "run": "project/run",
-    "etc": "project/etc",
-    "logs": "project/logs",
-    "archive": "project/archive",
-    "usr": "project/usr",
-    "params": {
-        "gtf": "genes.gtf",
-        "indexedGenome": "Bowtie2Index/genome"
-    }
+    "gtf": "path/to/gtf",
+    "indexed_genome": "path/to/genome/basename",
+    "stranded": "yes",
+    "overlap_mode": "union",
+    "feature_type": "exon",
+    "gff_attribute": "gene_id",
+    "normalize_counts": "deseq2"
 }
 ```
 
-where `indexedGenome` and `gtf` are paths relative to `ref`.
+where `indexed_genome` and `gtf` are paths relative to `ref`.
 
-`indexedGenome` is the basename of a bowtie2 index.
+`indexed_genome` is the basename of a bowtie2 index.
+
+The parameters `stranded`, `overlap_mode`, `feature_type` and `gff_attribute`
+are explained in the htseq documentation.
