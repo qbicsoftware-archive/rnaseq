@@ -58,7 +58,10 @@ for key in ['gtf', 'stranded', 'overlap_mode', 'indexed_genome',
         print("Missing parameter %s in etc/params.json" % key, file=sys.stderr)
         exit(1)
 
-indexed_genome = ref(parameters["indexed_genome"])
+parameters['indexed_genome'] = ref(parameters['indexed_genome'])
+parameters['gtf'] = ref(parameters['gtf'])
+
+indexed_genome = parameters["indexed_genome"]
 if not os.path.exists(indexed_genome + '.fa'):
     raise ValueError("Could not find indexed genome file %s" % indexed_genome)
 
@@ -204,8 +207,8 @@ rule TopHat2:
     input: "CutAdaptMerge/{name}.fastq"
     output: "TopHat2/{name}"
     run:
-        gtf = ref(parameters['gtf'])
-        genome = ref(parameters['indexed_genome'])
+        gtf = parameters['gtf']
+        genome = parameters['indexed_genome']
         shell('tophat --no-coverage-search -o {output} -p 2 -G %s %s {input}'
               % (gtf, genome))
 
