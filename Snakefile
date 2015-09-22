@@ -34,7 +34,7 @@ def etc(path):
 
 try:
     with open(etc("params.json")) as f:
-        params = json.load(f)
+        parameters = json.load(f)
 except OSError as e:
     print("Could not read parameter file: " + str(e), file=sys.stderr)
     sys.exit(1)
@@ -49,16 +49,16 @@ default_params = {
     "gff_attribute": 'gene_id',
     "feature_type": 'exon',
 }
-default_params.update(params)
-params = default_params
+default_params.update(parameters)
+parameters = default_params
 
 for key in ['gtf', 'stranded', 'overlap_mode', 'indexed_genome',
             'gff_attribute', 'feature_type', 'normalize_counts']:
-    if key not in params:
+    if key not in parameters:
         print("Missing parameter %s in etc/params.json" % key, file=sys.stderr)
         exit(1)
 
-indexed_genome = ref(params["indexed_genome"])
+indexed_genome = ref(parameters["indexed_genome"])
 if not os.path.exists(indexed_genome + '.fa'):
     raise ValueError("Could not find indexed genome file %s" % indexed_genome)
 
@@ -195,8 +195,8 @@ rule TopHat2:
     input: "CutAdaptMerge/{name}.fastq"
     output: "TopHat2/{name}"
     run:
-        gtf = ref(params['gtf'])
-        genome = ref(params['indexed_genome'])
+        gtf = ref(parameters['gtf'])
+        genome = ref(parameters['indexed_genome'])
         shell('tophat --no-coverage-search -o {output} -p 2 -G %s %s {input}'
               % (gtf, genome))
 
@@ -206,7 +206,7 @@ rule HTSeqCounts:
     run:
         sam_command = "samtools view {input}/accepted_hits.bam"
         htseq = ("htseq-count -i {gff_attribute} -t {feature_type} "
-                 "-m {overlap_mode} -s {stranded} {gtf}").format(**params)
+                 "-m {overlap_mode} -s {stranded} {gtf}").format(**parameters)
         shell("%s | %s > {output}" % (sam_command, htseq))
 
 rule IndexBAM:
