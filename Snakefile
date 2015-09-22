@@ -52,15 +52,15 @@ default_params = {
 default_params.update(params)
 params = default_params
 
-for key in ['gtf', 'stranded', 'overlap_mode',
+for key in ['gtf', 'stranded', 'overlap_mode', 'indexed_genome',
             'gff_attribute', 'feature_type', 'normalize_counts']:
     if key not in params:
         print("Missing parameter %s in etc/params.json" % key, file=sys.stderr)
         exit(1)
 
-indexedGenome = os.path.join(config['ref'], params["indexedGenome"])
+indexedGenome = ref(params["indexed_genome"])
 if not indexedGenome:
-    raise ValueError("no indexedGenome file supplied.")
+    raise ValueError("Could not find indexed genome file %s" % indexedGenome)
 
 
 INPUT_FILES = []
