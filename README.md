@@ -2,7 +2,7 @@ rna seq workflow for use with qproject.
 
 Add a config file "params.json" in `etc`:
 
-```
+```json
 {
     "gtf": "path/to/gtf",
     "indexed_genome": "path/to/genome/basename",
