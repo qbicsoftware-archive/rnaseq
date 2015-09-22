@@ -103,8 +103,10 @@ rule all:
 rule checksums:
     output: "checksums.ok"
     run:
-        checksums = data("*.sha256sum")
-        shell("sha256sum -c %s && touch {output}" % checksums)
+        out = os.path.abspath(str(output))
+        shell("cd %s; "
+              "sha256sum -c *.sha256sum && "
+              "touch %s" % (data('.'), out))
 
 rule LinkUncompressed:
     input: data("{name}.fastq")
@@ -119,7 +121,16 @@ rule Uncompress:
 rule PreFilterReads:
     input: "fastq/{name}.fastq"
     output: "PreFilterReads/{name}.fastq"
-    shell: "grep -A 3 '^@.* [^:]*:N:[^:]*' --no-group-separator {input} > {output}"
+    run:
+        with open(str(input)) as infile, open(str(output), 'w') as outfile:
+            line = infile.readline()
+            while line:
+                assert line.startswith('@')
+                body = ''.join(infile.readline() for _ in range(3))
+                if ':Y:' not in line:
+                    outfile.write(line)
+                    outfile.write(body)
+                line = infile.readline()
 
 rule FastQC:
     input: "PreFilterReads/{name}.fastq"
