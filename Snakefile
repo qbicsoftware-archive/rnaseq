@@ -44,13 +44,16 @@ except ValueError as e:
 
 default_params = {
     "stranded": 'yes',
-    "overlap_mode": 'union'
+    "overlap_mode": 'union',
+    "normalize_counts": "deseq2",
+    "gff_attribute": 'gene_id',
+    "feature_type": 'exon',
 }
 default_params.update(params)
 params = default_params
 
 for key in ['gtf', 'stranded', 'overlap_mode',
-            'gff_attribute', 'feature_type']:
+            'gff_attribute', 'feature_type', 'normalize_counts']:
     if key not in params:
         print("Missing parameter %s in etc/params.json" % key, file=sys.stderr)
         exit(1)
@@ -114,7 +117,7 @@ rule Uncompress:
 rule PreFilterReads:
     input: "fastq/{name}.fastq"
     output: "PreFilterReads/{name}.fastq"
-    shell: 'grep "1:N:" --no-group-separator -A 3 {input} > {output}'
+    shell: "grep -A 3 '^@.* [^:]*:N:[^:]*' --no-group-separator {input} > {output}"
 
 rule FastQC:
     input: "PreFilterReads/{name}.fastq"
