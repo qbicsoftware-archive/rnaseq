@@ -3,6 +3,8 @@
 #PBS -A qbic
 #PBS -l nodes=1:ppn=2:cfc
 #PBS -l walltime=40:00:00
+#PBS -e ../logs/jobscript.{rulename}.{jobid}.stderr
+#PBS -o ../logs/jobscript.{rulename}.{jobid}.stdout
 # properties = {properties}
 
 set -e
