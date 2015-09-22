@@ -215,7 +215,7 @@ rule HTSeqCounts:
     run:
         sam_command = "samtools view {input}/accepted_hits.bam"
         htseq = ("htseq-count -i {gff_attribute} -t {feature_type} "
-                 "-m {overlap_mode} -s {stranded} {gtf}").format(**parameters)
+                 "-m {overlap_mode} -s {stranded} - {gtf}").format(**parameters)
         shell("%s | %s > {output}" % (sam_command, htseq))
 
 rule IndexBAM:
