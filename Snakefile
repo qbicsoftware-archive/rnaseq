@@ -59,8 +59,8 @@ for key in ['gtf', 'stranded', 'overlap_mode', 'indexed_genome',
         exit(1)
 
 indexed_genome = ref(params["indexed_genome"])
-if not os.path.exists(indexed_genome + 'fa'):
-    raise ValueError("Could not find indexed genome file %s" % indexedGenome)
+if not os.path.exists(indexed_genome + '.fa'):
+    raise ValueError("Could not find indexed genome file %s" % indexed_genome)
 
 
 INPUT_FILES = []
