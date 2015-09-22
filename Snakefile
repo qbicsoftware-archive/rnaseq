@@ -65,6 +65,8 @@ if not indexedGenome:
 
 INPUT_FILES = []
 for name in os.listdir(DATA):
+    if name.lower().endswith('.sha256sum'):
+        continue
     if name.lower().endswith('.fastq'):
         if not name.endswith('.fastq'):
             print("Extension fastq is case sensitive.", file=sys.stderr)
