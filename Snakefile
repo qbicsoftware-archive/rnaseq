@@ -123,14 +123,23 @@ rule PreFilterReads:
     output: "PreFilterReads/{name}.fastq"
     run:
         with open(str(input)) as infile, open(str(output), 'w') as outfile:
+            num_ok = 0
+            num_filtered = 0
             line = infile.readline()
             while line:
                 assert line.startswith('@')
                 body = ''.join(infile.readline() for _ in range(3))
-                if ':Y:' not in line:
+                if all(':Y:' not in part for part in line.split(' ')[1:]):
+                    num_ok += 1
                     outfile.write(line)
                     outfile.write(body)
+                else:
+                    num_filtered += 1
                 line = infile.readline()
+        num_all = num_ok + num_filtered
+        if num_filtered / num_all > .1:
+            raise ValueError("More than 10% of reads were filtered in "
+                "PreFilterReads. This probably indicates a bug.")
 
 rule FastQC:
     input: "PreFilterReads/{name}.fastq"
