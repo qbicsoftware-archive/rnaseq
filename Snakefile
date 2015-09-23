@@ -201,7 +201,13 @@ rule MergeAdapters:
 rule CutAdapt:
     input: "MergeAdapters/merged.fasta", "PreFilterReads/{name}.fastq"
     output: "CutAdaptMerge/{name}.fastq"
-    shell: 'cutadapt --discard-trimmed -a file:{input[0]} -o {output} {input[1]}'
+    run:
+        with open(str(input[0])) as f:
+            skip = bool(f.read(1))
+        if skip :
+            os.symlink(str(input[1]), str(output))
+        else:
+            shell('cutadapt --discard-trimmed -a file:{input[0]} -o {output} {input[1]}')
 
 rule TopHat2:
     input: "CutAdaptMerge/{name}.fastq"
