@@ -203,9 +203,9 @@ rule CutAdapt:
     output: "CutAdaptMerge/{name}.fastq"
     run:
         with open(str(input[0])) as f:
-            skip = bool(f.read(1))
-        if skip :
-            os.symlink(str(input[1]), str(output))
+            skip = not bool(f.read(1))
+        if skip:
+            os.symlink(os.path.abspath(str(input[1])), str(output))
         else:
             shell('cutadapt --discard-trimmed -a file:{input[0]} -o {output} {input[1]}')
 
