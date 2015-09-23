@@ -98,6 +98,7 @@ OUTPUT_FILES.extend(expand("{result}/HTSeqCounts_{name}.txt", name=INPUT_FILES, 
 OUTPUT_FILES.extend(expand("TopHat2/{name}/accepted_hits.bai", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/MappingStats/{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.append("checksums.ok")
+OUTPUT_FILES.append(result('all_counts.csv'))
 
 
 rule all:
@@ -226,6 +227,25 @@ rule HTSeqCounts:
         htseq = ("htseq-count -i {gff_attribute} -t {feature_type} "
                  "-m {overlap_mode} -s {stranded} - {gtf}").format(**parameters)
         shell("%s | %s > {output}" % (sam_command, htseq))
+
+rule CombineCounts:
+    input:
+        expand("{result}/HTSeqCounts_{name}.txt",
+               name=INPUT_FILES, result=RESULT)
+    output: result("all_counts.csv")
+    run:
+        import pandas as pd
+        import re
+
+        pattern = "HTSeqCounts_([0-9a-zA-Z_\- ]*).txt"
+        names = [re.search(pattern, str(name)).groups()[0] for name in input]
+        data = {}
+        for name, file in zip(names, input):
+            file = str(file)
+            data[name] = pd.Series.from_csv(file, sep='\t')
+        df = pd.DataFrame(data)
+        df.index.name = parameters['gff_attribute']
+        df.to_csv(str(output))
 
 rule IndexBAM:
     input: "TopHat2/{name}"
