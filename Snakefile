@@ -113,6 +113,8 @@ rule checksums:
             shell("cd %s; "
                   "sha256sum -c *.sha256sum && "
                   "touch %s" % (data('.'), out))
+        else:
+            shell("touch %s" % out)
 
 rule LinkUncompressed:
     input: data("{name}.fastq")
