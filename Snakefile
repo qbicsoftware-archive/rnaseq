@@ -4,6 +4,7 @@ import subprocess
 import json
 from os.path import join as pjoin
 from os.path import exists as pexists
+import glob
 
 configfile: "config.json"
 workdir: config["var"]
@@ -108,9 +109,10 @@ rule checksums:
     output: "checksums.ok"
     run:
         out = os.path.abspath(str(output))
-        shell("cd %s; "
-              "sha256sum -c *.sha256sum && "
-              "touch %s" % (data('.'), out))
+        if glob.glob(data("*.sha256sum")):
+            shell("cd %s; "
+                  "sha256sum -c *.sha256sum && "
+                  "touch %s" % (data('.'), out))
 
 rule LinkUncompressed:
     input: data("{name}.fastq")
