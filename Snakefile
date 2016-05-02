@@ -44,7 +44,7 @@ except ValueError as e:
     sys.exit(1)
 
 default_params = {
-    "stranded": 'yes',
+    "stranded": 'no',
     "overlap_mode": 'union',
     "normalize_counts": "deseq2",
     "gff_attribute": 'gene_id',
@@ -94,13 +94,13 @@ OUTPUT_FILES = []
 OUTPUT_FILES.extend(expand("Summary/NumReads/Original/{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/NumReads/PreFilter/{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("{result}/FastQC_{name}.zip", name=INPUT_FILES, result=RESULT))
+OUTPUT_FILES.extend(expand("{result}/FastQCcut_{name}.zip", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/NumReads/CutAdaptMerge/{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("{result}/HTSeqCounts_{name}.txt", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("TopHat2/{name}/accepted_hits.bai", name=INPUT_FILES, result=RESULT))
 OUTPUT_FILES.extend(expand("Summary/MappingStats/{name}.txt", name=INPUT_FILES, result=RESULT))
-OUTPUT_FILES.append("checksums.ok")
+#OUTPUT_FILES.append("checksums.ok")
 OUTPUT_FILES.append(result('all_counts.csv'))
-
 
 rule all:
     input: OUTPUT_FILES
@@ -163,6 +163,11 @@ rule FastQCcut:
     input: "CutAdaptMerge/{name}.fastq"
     output: "FastQCcut/{name}"
     shell: 'mkdir -p {output} && (fastqc {input} -o {output} || (rm -rf {output} && exit 1))'
+
+rule FastQCcutCpToResult:
+    input: "FastQCcut/{name}"
+    output: result("FastQCcut_{name}.zip")
+    shell: "cp {input}/{wildcards.name}_fastqc.zip {output}"
 
 rule Overrepresented:
     input: "FastQC/{name}"
