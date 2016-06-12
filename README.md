@@ -6,7 +6,7 @@ Add a config file "params.json" in `etc`:
 {
     "gtf": "path/to/gtf",
     "indexed_genome": "path/to/genome/basename",
-    "stranded": "yes",
+    "stranded": "no",
     "overlap_mode": "union",
     "feature_type": "exon",
     "gff_attribute": "gene_id",
