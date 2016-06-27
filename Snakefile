@@ -152,7 +152,7 @@ rule PreFilterReads:
 rule FastQC:
     input: "PreFilterReads/{name}.fastq"
     output: "FastQC/{name}"
-    shell: 'mkdir -p {output} && (fastqc {input} -o {output} || (rm -rf {output} && exit 1))'
+    shell: 'mkdir -p {output} && (fastqc {input} -o {output} --extract || (rm -rf {output} && exit 1))'
 
 rule FastQCCpToResult:
     input: "FastQC/{name}"
@@ -162,7 +162,7 @@ rule FastQCCpToResult:
 rule FastQCcut:
     input: "CutAdaptMerge/{name}.fastq"
     output: "FastQCcut/{name}"
-    shell: 'mkdir -p {output} && (fastqc {input} -o {output} || (rm -rf {output} && exit 1))'
+    shell: 'mkdir -p {output} && (fastqc {input} -o {output} --extract || (rm -rf {output} && exit 1))'
 
 rule FastQCcutCpToResult:
     input: "FastQCcut/{name}"
