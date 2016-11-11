@@ -208,8 +208,16 @@ rule MergeAdapters:
     output: "MergeAdapters/merged.fasta"
     shell: "cat {input} > {output}"
 
+rule subset_Adapters:
+    input: "MergeAdapters/merged.fasta",
+    output: "MergeAdapters/merged.subset.fasta"
+    shell:
+        """
+	awk '/^>/ {{P=index($0,"No Hit")==0}} {{if(P) print}} ' {input} > {output}
+        """
+
 rule CutAdapt:
-    input: "MergeAdapters/merged.fasta", "PreFilterReads/{name}.fastq"
+    input: "MergeAdapters/merged.subset.fasta", "PreFilterReads/{name}.fastq"
     output: "CutAdaptMerge/{name}.fastq"
     run:
         with open(str(input[0])) as f:
