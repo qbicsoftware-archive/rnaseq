@@ -216,7 +216,7 @@ rule subset_Adapters:
     output: "MergeAdapters/merged.subset.fasta"
     shell:
         """
-        awk '/^>/ {{P=index($0,"No Hit")==0}} {{if(P) print}} ' {input} > {output}
+       awk '/^>/ {{P=index($0,"No Hit")==0}} {{if(P) print}} ' {input} > {output}
         """
 
 rule CutAdapt:
