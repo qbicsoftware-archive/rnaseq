@@ -299,7 +299,7 @@ rule NumreadsOrig:
 """
 Rule to get software versions of used programs in workflow. Rule either calls program with --version flag if possible, or runs
 it without parameters displaying output row containing version information with unix tail command.
-It then redirects it to Summary/software_versions.txt
+It then redirects it to Summary/software_versions.txt 
 """
 rule SoftwareVersions:
     input: result("all_counts.csv")
