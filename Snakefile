@@ -216,7 +216,7 @@ rule subset_Adapters:
     output: "MergeAdapters/merged.subset.fasta"
     shell:
         """
-    awk '/^>/ {{P=index($0,"No Hit")==0}} {{if(P) print}} ' {input} > {output}
+        awk '/^>/ {{P=index($0,"No Hit")==0}} {{if(P) print}} ' {input} > {output}
         """
 
 rule CutAdapt:
@@ -296,11 +296,13 @@ rule NumreadsOrig:
     input: "fastq/{name}.fastq"
     output: "Summary/NumReads/Original/{name}.txt"
     shell: '''dc -e "$(wc -l {input} | cut -f1 -d' ') 4 / p" > {output}'''
+        
 """
 Rule to get software versions of used programs in workflow. Rule either calls program with --version flag if possible, or runs
 it without parameters displaying output row containing version information with unix tail command.
 It then redirects it to Summary/software_versions.txt 
 """
+
 rule SoftwareVersions:
     input: result("all_counts.csv")
     output: "Summary/software_versions.txt"
