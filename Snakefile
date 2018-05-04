@@ -103,8 +103,6 @@ OUTPUT_FILES.extend(expand("Summary/MappingStats/{name}.txt", name=INPUT_FILES, 
 OUTPUT_FILES.append(result('all_counts.csv'))
 OUTPUT_FILES.append("Summary/software_versions.txt")
 
-
-
 rule all:
     input: OUTPUT_FILES
 
