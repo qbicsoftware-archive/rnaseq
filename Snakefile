@@ -101,6 +101,7 @@ OUTPUT_FILES.extend(expand("TopHat2/{name}/accepted_hits.bai", name=INPUT_FILES,
 OUTPUT_FILES.extend(expand("Summary/MappingStats/{name}.txt", name=INPUT_FILES, result=RESULT))
 #OUTPUT_FILES.append("checksums.ok")
 OUTPUT_FILES.append(result('all_counts.csv'))
+OUTPUT_FILES.append("Summary/software_versions.txt")
 
 rule all:
     input: OUTPUT_FILES
@@ -213,7 +214,7 @@ rule subset_Adapters:
     output: "MergeAdapters/merged.subset.fasta"
     shell:
         """
-	awk '/^>/ {{P=index($0,"No Hit")==0}} {{if(P) print}} ' {input} > {output}
+       awk '/^>/ {{P=index($0,"No Hit")==0}} {{if(P) print}} ' {input} > {output}
         """
 
 rule CutAdapt:
@@ -293,3 +294,21 @@ rule NumreadsOrig:
     input: "fastq/{name}.fastq"
     output: "Summary/NumReads/Original/{name}.txt"
     shell: '''dc -e "$(wc -l {input} | cut -f1 -d' ') 4 / p" > {output}'''
+        
+"""
+Rule to get software versions of used programs in workflow. Rule either calls program with --version flag if possible, or runs
+it without parameters displaying output row containing version information with unix tail command.
+It then redirects it to Summary/software_versions.txt 
+"""
+
+rule SoftwareVersions:
+    input: result("all_counts.csv")
+    output: "Summary/software_versions.txt"
+    run:
+        shell("anaconda --version > Summary/software_versions.txt")
+        shell("conda --version >> Summary/software_versions.txt")
+        shell("fastqc --version >> Summary/software_versions.txt")
+        shell("htseq-count -h | tail -1 >> Summary/software_versions.txt")
+        shell("bowtie2 --version | head -1 >> Summary/software_versions.txt")
+        shell("tophat2 --version >> Summary/software_versions.txt")
+        shell("samtools --version | head -2 >> Summary/software_versions.txt")
