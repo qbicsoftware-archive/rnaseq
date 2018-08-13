@@ -56,6 +56,7 @@ Using `snakemake -n` one can display the operations the workflow will perform.
 Using the `--dag` parameter and piping it to `dot` one can create a .pdf version of the directed acyclic graph used by snakemake to inspect the behavious of the workflow on a local machine.
 
 ```
+module load qbic/anaconda
 cd src/
 snakemake -n
 snakemake --dag | dot -Tpdf > dag.pdf
