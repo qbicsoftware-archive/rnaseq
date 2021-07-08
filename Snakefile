@@ -226,7 +226,7 @@ rule CutAdapt:
         if skip:
             os.symlink(os.path.abspath(str(input[1])), str(output))
         else:
-            shell('cutadapt --discard-trimmed -a file:{input[0]} -o {output} {input[1]}')
+            shell('cutadapt --info-file CutAdaptMerge/cut_adapt_log.txt --discard-trimmed -a file:{input[0]} -o {output} {input[1]}')
 
 rule TopHat2:
     input: "CutAdaptMerge/{name}.fastq"
